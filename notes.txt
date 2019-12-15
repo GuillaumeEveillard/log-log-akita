@@ -1,0 +1,17 @@
+Update Rust with rustiup
+
+Install yarn
+
+curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+
+apt get update
+apt install yarn
+yarn (needed to real install yarn)
+
+git clone https://github.com/yewstack/yew-wasm-pack-template.git
+(https://github.com/yewstack/yew-wasm-pack-template)
+
+yarn run build
+
+yarn run start:dev
