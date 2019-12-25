@@ -4,6 +4,7 @@ use strum::IntoEnumIterator;
 use strum_macros::{EnumIter, ToString};
 use yew::events::IKeyboardEvent;
 use yew::format::Json;
+use yew::events::ChangeData;
 use yew::services::storage::{Area, StorageService};
 use yew::{html, Component, ComponentLink, Href, Html, Renderable, ShouldRender};
 use std::string::ToString;
@@ -43,7 +44,7 @@ impl LogFile {
     }
     fn new_from_string(s: &str) -> LogFile {
         let lines = s.split("\n").map(str::to_string).collect();
-        LogFile{lines: lines}
+        LogFile{ lines }
     }
 }
 
@@ -77,7 +78,8 @@ pub enum Msg {
     Nope,
     UpdateLogFile(String),
     NewFilter,
-    UpdateFilterPattern(usize, String)
+    UpdateFilterPattern(usize, String),
+    UpdateFilterMode(usize, ChangeData)
 }
 
 impl Component for App {
@@ -158,6 +160,26 @@ impl Component for App {
             Msg::UpdateFilterPattern(id, pattern) => {
                 self.state.log_filters[id].pattern = pattern
             }
+            Msg::UpdateFilterMode(id, changeData) => {
+                match changeData {
+                    ChangeData::Select(selectElem) => {
+                        match selectElem.value() {
+                            Some(s) => {
+                                let mode = match s.as_str() {
+                                    "Includes" => { FilterMode::Includes }
+                                    "Excludes" => { FilterMode::Excludes }
+                                    _ => panic!("Unknown mode ")
+                                };
+
+                                self.state.log_filters[id].mode = mode;
+                            }
+                            None => {}
+                        }
+
+                    }
+                    _ => panic!("What?!")
+                }
+            }
         }
         self.storage.store(KEY, Json(&self.state.entries));
         true
@@ -232,9 +254,14 @@ fn line_matches(filters: &Vec<LogFilter>, s: &str) -> bool {
         .filter(|f|  f.pattern.len() != 0);
 
     for f in iter {
-        if !s.contains(&f.pattern) {
-            return false;
-        }
+        match f.mode {
+            FilterMode::Includes => {
+                if !s.contains(&f.pattern) { return false };
+            },
+            FilterMode::Excludes => {
+                if s.contains(&f.pattern) { return false };
+            },
+        };
     }
 
     return true;
@@ -245,7 +272,7 @@ impl App {
         let id = filter.id;
         html! {
             <li>
-                <select>
+                <select onchange=|e| Msg::UpdateFilterMode(id, e)>
                     <option>{"Includes"}</option>
                     <option>{"Excludes"}</option>
                 </select>
