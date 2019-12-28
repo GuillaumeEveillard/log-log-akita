@@ -1,13 +1,9 @@
 use log::*;
 use serde_derive::{Deserialize, Serialize};
-use strum::IntoEnumIterator;
-use strum_macros::{EnumIter, ToString};
-use yew::events::IKeyboardEvent;
-use yew::format::Json;
 use yew::events::ChangeData;
-use yew::services::storage::{Area, StorageService};
-use yew::{html, Component, ComponentLink, Href, Html, Renderable, ShouldRender};
+use yew::{html, Component, ComponentLink, Html, Renderable, ShouldRender};
 use std::string::ToString;
+use crate::app::Tab::RawLog;
 
 pub struct App {
     state: State,
@@ -15,6 +11,7 @@ pub struct App {
 
 #[derive(Serialize, Deserialize)]
 pub struct State {
+    active_tab: Tab,
     log_file: LogFile,
     log_filters: Vec<LogFilter>
 }
@@ -38,6 +35,9 @@ impl LogFile {
 enum FilterMode {Includes, Excludes}
 
 #[derive(Serialize, Deserialize)]
+enum Tab {Viewer, RawLog}
+
+#[derive(Serialize, Deserialize)]
 struct LogFilter {
     id: usize,
     mode: FilterMode,
@@ -54,7 +54,8 @@ pub enum Msg {
     UpdateLogFile(String),
     NewFilter,
     UpdateFilterPattern(usize, String),
-    UpdateFilterMode(usize, ChangeData)
+    UpdateFilterMode(usize, ChangeData),
+    SelectTab(Tab)
 }
 
 impl Component for App {
@@ -63,6 +64,7 @@ impl Component for App {
 
     fn create(_: Self::Properties, _: ComponentLink<Self>) -> Self {
         let state = State {
+            active_tab: RawLog,
             log_file: LogFile::new_empty(),
             log_filters: Vec::new()
         };
@@ -100,6 +102,9 @@ impl Component for App {
                     _ => panic!("What?!")
                 }
             }
+            Msg::SelectTab(tab) => {
+                self.state.active_tab = tab;
+            }
         }
         true
     }
@@ -107,32 +112,54 @@ impl Component for App {
 
 impl Renderable<App> for App {
     fn view(&self) -> Html<Self> {
+        let viewer_tab_style = match self.state.active_tab {
+            Tab::Viewer => { " active" }
+            Tab::RawLog => { "" }
+        };
+        let raw_log_tab_style = match self.state.active_tab {
+            Tab::Viewer => { "" }
+            Tab::RawLog => { " active" }
+        };
+
         info!("rendered!");
         html! {
         <div>
             <h1>{"Log Log Akita"}</h1>
-            <div>
-                {for self.state.log_filters.iter().map(|filter| self.view_one_filter(filter))}
-                <a
-                    href="#"
-                    onclick=|_| Msg::NewFilter>
-                    {"New filter"}
-                </a>
-            </div>
-            <div>
-                {for self.state.log_file.lines.iter()
-                    .filter(|l| line_matches(&self.state.log_filters, l))
-                    .map(|l| self.view_line_of_log(l))}
-            </div>
-            <div>
-                 <textarea
-                 placeholder="past the log here"
-                 cols="40" rows="5"
-                 oninput=|e| Msg::UpdateLogFile(e.value)>
-                  </textarea>
+            <ul class="nav nav-tabs">
+                <li class="nav-item">
+                    <a class= {"nav-link".to_owned()+viewer_tab_style} href="#" onclick=|_| Msg::SelectTab(Tab::Viewer) >{"Viewer"}</a>
+                </li>
+                <li class="nav-item">
+                    <a class={"nav-link".to_owned()+raw_log_tab_style} href="#" onclick=|_| Msg::SelectTab(Tab::RawLog) >{"Raw log"}</a>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div class={"tab-pane".to_owned()+viewer_tab_style} id="p1">
+
+                <div>
+                    {for self.state.log_filters.iter().map(|filter| self.view_one_filter(filter))}
+                    <a
+                        href="#"
+                        onclick=|_| Msg::NewFilter>
+                        {"New filter"}
+                    </a>
+                </div>
+                <div>
+                    {for self.state.log_file.lines.iter()
+                        .filter(|l| line_matches(&self.state.log_filters, l))
+                        .map(|l| self.view_line_of_log(l))}
+                </div>
+
+                </div>
+                <div class={"tab-pane".to_owned()+raw_log_tab_style} id="p2">
+                     <textarea
+                     placeholder="past the log here"
+                     cols="40" rows="5"
+                     oninput=|e| Msg::UpdateLogFile(e.value)>
+                      </textarea>
+                </div>
             </div>
         </div>
-
         }
     }
 }
