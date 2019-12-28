@@ -15,3 +15,12 @@ git clone https://github.com/yewstack/yew-wasm-pack-template.git
 yarn run build
 
 yarn run start:dev
+
+
+INFO Middleware initialized
+INFO App is starting
+DEBUG Middleware request 1
+DEBUG Middleware request 2
+DEBUG App component 1 ready
+DEBUG App component 2 ready
+INFO App is started
