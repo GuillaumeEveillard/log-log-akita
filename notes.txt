@@ -1,5 +1,19 @@
 Update Rust with rustiup
 
+cargo install wasm-pack wasm-bindgen-cli
+
+Windows
+
+npm install -g yarn
+npm install -g webpack
+
+yarn run build
+
+yarn run start:dev
+
+
+-------------
+
 Install yarn
 
 curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
