@@ -1,4 +1,13 @@
 language: node_js
+node_js:
+- stable
 
 cache: yarn
 
+before_script:
+- curl https://sh.rustup.rs -sSf | sh -s -- -y
+- PATH=$HOME/.cargo/bin:$PATH
+- cargo install wasm-pack wasm-bindgen-cli
+
+script:
+- yarn run build
