@@ -1,8 +1,15 @@
-language: node_js
-node_js:
-- stable
-
-cache: yarn
-
-script:
-- yarn run build
+matrix:
+  include:
+    - language: rust
+      rust:
+        - stable
+      before_script:
+        - cargo install wasm-pack wasm-bindgen-cli
+      jobs:
+        fast_finish: true
+    - language: node.js
+      node_js: "stable"
+      before_script:
+        - cd angular-application
+      script:
+        - yarn run build
