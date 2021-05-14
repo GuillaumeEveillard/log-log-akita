@@ -6,6 +6,7 @@ use std::string::ToString;
 use crate::Tab::RawLog;
 
 pub struct App {
+    link: ComponentLink<Self>,
     state: State,
 }
 
@@ -35,7 +36,7 @@ impl LogFile {
 enum FilterMode {Includes, Excludes}
 
 #[derive(Serialize, Deserialize)]
-enum Tab {Viewer, RawLog}
+pub enum Tab {Viewer, RawLog}
 
 #[derive(Serialize, Deserialize)]
 struct LogFilter {
@@ -62,13 +63,13 @@ impl Component for App {
     type Message = Msg;
     type Properties = ();
 
-    fn create(_: Self::Properties, _: ComponentLink<Self>) -> Self {
+    fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         let state = State {
             active_tab: RawLog,
             log_file: LogFile::new_empty(),
             log_filters: Vec::new()
         };
-        App { state }
+        App { link, state }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
@@ -83,24 +84,25 @@ impl Component for App {
                 self.state.log_filters[id].pattern = pattern
             }
             Msg::UpdateFilterMode(id, changeData) => {
-                match changeData {
-                    ChangeData::Select(selectElem) => {
-                        match selectElem.value() {
-                            Some(s) => {
-                                let mode = match s.as_str() {
-                                    "Includes" => { FilterMode::Includes }
-                                    "Excludes" => { FilterMode::Excludes }
-                                    _ => panic!("Unknown mode ")
-                                };
-
-                                self.state.log_filters[id].mode = mode;
-                            }
-                            None => {}
-                        }
-
-                    }
-                    _ => panic!("What?!")
-                }
+                // match changeData {
+                //     ChangeData::Select(selectElem) => {
+                //         println!("{}", selectElem.selected_options());
+                //         match selectElem.value() {
+                //             Some(s) => {
+                //                 let mode = match s.as_str() {
+                //                     "Includes" => { FilterMode::Includes }
+                //                     "Excludes" => { FilterMode::Excludes }
+                //                     _ => panic!("Unknown mode ")
+                //                 };
+                //
+                //                 self.state.log_filters[id].mode = mode;
+                //             }
+                //             None => {}
+                //         }
+                //
+                //     }
+                //     _ => panic!("What?!")
+                // }
             }
             Msg::SelectTab(tab) => {
                 self.state.active_tab = tab;
@@ -128,10 +130,10 @@ impl Component for App {
             <h1>{"Log Log Akita"}</h1>
             <ul class="nav nav-tabs">
                 <li class="nav-item">
-                    <a class= {"nav-link".to_owned()+viewer_tab_style} href="#" onclick=|_| Msg::SelectTab(Tab::Viewer) >{"Viewer"}</a>
+                    <a class= {"nav-link".to_owned()+viewer_tab_style} href="#" onclick=self.link.callback(|_| Msg::SelectTab(Tab::Viewer)) >{"Viewer"}</a>
                 </li>
                 <li class="nav-item">
-                    <a class={"nav-link".to_owned()+raw_log_tab_style} href="#" onclick=|_| Msg::SelectTab(Tab::RawLog) >{"Raw log"}</a>
+                    <a class={"nav-link".to_owned()+raw_log_tab_style} href="#" onclick=self.link.callback(|_| Msg::SelectTab(Tab::RawLog)) >{"Raw log"}</a>
                 </li>
             </ul>
             <div class="tab-content">
@@ -141,7 +143,7 @@ impl Component for App {
                     {for self.state.log_filters.iter().map(|filter| self.view_one_filter(filter))}
                     <a
                         href="#"
-                        onclick=|_| Msg::NewFilter>
+                        onclick=self.link.callback(|_| Msg::NewFilter)>
                         {"New filter"}
                     </a>
                 </div>
@@ -156,7 +158,7 @@ impl Component for App {
                      <textarea
                      placeholder="past the log here"
                      cols="40" rows="5"
-                     oninput=|e| Msg::UpdateLogFile(e.value)>
+                     oninput=self.link.callback(|e: InputData| Msg::UpdateLogFile(e.value))>
                       </textarea>
                 </div>
             </div>
@@ -189,11 +191,11 @@ impl App {
         let id = filter.id;
         html! {
             <li>
-                <select onchange=|e| Msg::UpdateFilterMode(id, e)>
+                <select onchange=self.link.callback(move |e| Msg::UpdateFilterMode(id, e))>
                     <option>{"Includes"}</option>
                     <option>{"Excludes"}</option>
                 </select>
-                <input placeholder="insert a pattern" value={filter.pattern.clone()} oninput=|e| Msg::UpdateFilterPattern(id, e.value) />
+                <input placeholder="insert a pattern" value={filter.pattern.clone()} oninput=self.link.callback(move |e: InputData| Msg::UpdateFilterPattern(id, e.value)) />
             </li>
         }
     }
