@@ -84,25 +84,18 @@ impl Component for App {
                 self.state.log_filters[id].pattern = pattern
             }
             Msg::UpdateFilterMode(id, changeData) => {
-                // match changeData {
-                //     ChangeData::Select(selectElem) => {
-                //         println!("{}", selectElem.selected_options());
-                //         match selectElem.value() {
-                //             Some(s) => {
-                //                 let mode = match s.as_str() {
-                //                     "Includes" => { FilterMode::Includes }
-                //                     "Excludes" => { FilterMode::Excludes }
-                //                     _ => panic!("Unknown mode ")
-                //                 };
-                //
-                //                 self.state.log_filters[id].mode = mode;
-                //             }
-                //             None => {}
-                //         }
-                //
-                //     }
-                //     _ => panic!("What?!")
-                // }
+                match changeData {
+                    ChangeData::Select(selectElem) => {
+                        let mode = match selectElem.value().as_str() {
+                            "Includes" => { FilterMode::Includes }
+                            "Excludes" => { FilterMode::Excludes }
+                            _ => panic!("Unknown mode ")
+                        };
+
+                        self.state.log_filters[id].mode = mode;
+                    }
+                    _ => panic!("What?!")
+                }
             }
             Msg::SelectTab(tab) => {
                 self.state.active_tab = tab;
