@@ -1,9 +1,9 @@
-use log::*;
+#![recursion_limit = "512"]
+
 use serde_derive::{Deserialize, Serialize};
-use yew::events::ChangeData;
-use yew::{html, Component, ComponentLink, Html, Renderable, ShouldRender};
+use yew::prelude::*;
 use std::string::ToString;
-use crate::app::Tab::RawLog;
+use crate::Tab::RawLog;
 
 pub struct App {
     state: State,
@@ -108,10 +108,12 @@ impl Component for App {
         }
         true
     }
-}
 
-impl Renderable<App> for App {
-    fn view(&self) -> Html<Self> {
+    fn change(&mut self, _props: Self::Properties) -> bool {
+        false
+    }
+
+    fn view(&self) -> Html {
         let viewer_tab_style = match self.state.active_tab {
             Tab::Viewer => { " active" }
             Tab::RawLog => { "" }
@@ -121,7 +123,6 @@ impl Renderable<App> for App {
             Tab::RawLog => { " active" }
         };
 
-        info!("rendered!");
         html! {
         <div>
             <h1>{"Log Log Akita"}</h1>
@@ -184,7 +185,7 @@ fn line_matches(filters: &Vec<LogFilter>, s: &str) -> bool {
 }
 
 impl App {
-    fn view_one_filter(&self, filter: &LogFilter) -> Html<App> {
+    fn view_one_filter(&self, filter: &LogFilter) -> Html {
         let id = filter.id;
         html! {
             <li>
@@ -197,9 +198,14 @@ impl App {
         }
     }
 
-    fn view_line_of_log(&self, line: &str) -> Html<App> {
+    fn view_line_of_log(&self, line: &str) -> Html {
         html! {
             <p>{line}</p>
         }
     }
+}
+
+
+fn main() {
+    yew::start_app::<App>();
 }

@@ -10,17 +10,16 @@ A toy project to discover web development in Rust.
 
 Prerequisites
 - Rust and Cargo
-- Yarn
 
-Install wasm-pack and wasm-bindgen-cli
+Install
 ```
-cargo install wasm-pack wasm-bindgen-cli
+cargo install --locked trunk
+cargo install wasm-bindgen-cli
 ```
 
 Build and run:
 ```
-yarn run build
-yarn run start:dev
+trunk serve
 ```
 
 ## Main technologies
