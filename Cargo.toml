@@ -5,6 +5,6 @@ authors = ["Guillaume Eveillard"]
 edition = "2018"
 
 [dependencies]
-yew = "0.17"
+yew = "0.18"
 serde = "1"
 serde_derive = "1"
