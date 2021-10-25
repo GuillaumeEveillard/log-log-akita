@@ -1,5 +1,8 @@
 #![recursion_limit = "512"]
 
+mod engine;
+mod cli;
+
 use serde_derive::{Deserialize, Serialize};
 use yew::prelude::*;
 use std::string::ToString;
