@@ -9,3 +9,17 @@ yew = "0.18"
 serde = "1"
 serde_derive = "1"
 clap = "3.0.0-beta.5"
+tide = "0.16.0"
+async-std = { version = "1.8.0", features = ["attributes"] }
+
+[[bin]]
+name = "cli"
+path = "src/cli/mod.rs"
+
+[[bin]]
+name = "server"
+path = "src/server/mod.rs"
+
+[[bin]]
+name = "web"
+path = "src/web/mod.rs"
