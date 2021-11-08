@@ -1,6 +1,39 @@
 mod engine;
 
-fn main() {
+use std::{error::Error, io};
+use crossterm::{
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+    execute,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+};
+use tui::{Terminal, backend::Backend};
+use tui::backend::CrosstermBackend;
+use tui::style::{Color, Modifier, Style};
+use tui::text::{Span, Spans};
+use tui::widgets::{Block, Borders, Paragraph, Widget, Wrap};
+use tui::layout::{Alignment, Constraint, Direction, Layout};
+
+fn main() -> Result<(), io::Error> {
+    enable_raw_mode()?;
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
+
+    run(&mut terminal);
+
+     // restore terminal
+     disable_raw_mode()?;
+     execute!(
+         terminal.backend_mut(),
+         LeaveAlternateScreen,
+         DisableMouseCapture
+     )?;
+     terminal.show_cursor()?;
+
+     Ok(())
+
+    /*
     let arg_matches = clap::App::new("Log Log Akita")
         .arg(clap::Arg::new("include")
             .about("include pattern")
@@ -44,6 +77,62 @@ fn main() {
     let engine = engine::Engine::new(files, filters);
 
     engine.all_lines().iter().for_each(|l| println!("{}", l));
-   
+   */
 
+}
+
+fn run<B: Backend>(terminal: &mut Terminal<B>) -> Result<(), io::Error> {
+    loop {
+
+        let mut x = false;
+
+        terminal.draw(|f| {
+            let size = f.size();
+
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .margin(1)
+                .constraints(
+                    [
+                        Constraint::Max(10000),
+                        Constraint::Length(10)
+                    ].as_ref()
+                )
+                .split(f.size());
+
+            let txt = if x { "faux "} else {"vrai"};
+            let text = vec![
+                Spans::from(vec![
+                    Span::raw(txt),
+                    Span::styled("line",Style::default().add_modifier(Modifier::ITALIC)),
+                    Span::raw("."),
+                ]),
+                Spans::from(Span::styled("Second line", Style::default().fg(Color::Red))),];
+            let para = Paragraph::new(text)
+                .block(Block::default().title("Paragraph").borders(Borders::ALL))
+                .style(Style::default().fg(Color::White).bg(Color::Black))
+                .alignment(Alignment::Center)
+                .wrap(Wrap { trim: true });
+            f.render_widget(para, chunks[0]);
+
+            let block = Block::default()
+                .title("Block")
+                .borders(Borders::ALL);
+            f.render_widget(block, chunks[1]);
+        
+        })?;
+
+        if let Event::Key(key) = event::read()? {
+            match key.code {
+                KeyCode::Char('e') => {
+                    x = true;
+                }
+                KeyCode::Char('q') => {
+                    return Ok(());
+                }
+                _ => {}
+            }
+        }
+    }
+    Ok(())
 }

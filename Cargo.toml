@@ -11,6 +11,8 @@ serde_derive = "1"
 clap = "3.0.0-beta.5"
 tide = "0.16.0"
 async-std = { version = "1.8.0", features = ["attributes"] }
+crossterm = "0.20"
+tui = { version = "0.16", default-features = false, features = ['crossterm'] }
 
 [[bin]]
 name = "cli"
