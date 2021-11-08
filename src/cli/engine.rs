@@ -1,5 +1,11 @@
 use std::path::PathBuf;
 use std::path::Path;
+use std::slice::Iter;
+use chrono::NaiveDateTime;
+use chrono::Utc;
+use smallvec::SmallVec;
+use smallvec::smallvec;
+use chrono::DateTime;
 
 pub struct Engine {
     files: Vec<File>,
@@ -14,8 +20,17 @@ impl Engine {
 
     pub fn all_lines(&self) -> Vec<String> {
         let mut lines = Vec::new();
-        self.files.iter()
-            .for_each(|f| lines.extend(f.lines.iter().filter(|l| self.keep(l)).cloned()));
+
+        for file in &self.files {
+            for rec in &file.records {
+                lines.extend(
+                    rec.line_iterator()
+                        .filter(|l| self.keep(l)).cloned());
+            }
+        }
+
+//        self.files.iter()
+  //          .for_each(|f| lines.extend(f.records.iter().filter(|l| self.keep(l)).cloned()));
         lines
     }
 
@@ -26,17 +41,34 @@ impl Engine {
 
 struct File {
     path: PathBuf,
-    lines: Vec<String>,
+    records: Vec<Record>,
     filters: Vec<Box<dyn Filter>>
+}
+
+struct Record {
+    timestamp: DateTime<Utc>,
+    lines: SmallVec::<[String; 1]>
+}
+
+impl Record {
+    fn line_iterator(&self) -> Iter<String> {
+        self.lines.iter()
+    }
 }
 
 impl File {
     fn new<P: AsRef<Path>>(path: P) -> File {
         let lines = File::lines_from_file(&path);
+        let records = lines.into_iter()
+        .map(|l| Record {
+            timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(61, 0), Utc),
+            lines: smallvec![l]})
+        .collect();
+
         let p = path.as_ref();
         let mut pb = PathBuf::new();
         pb.push(p);
-        File{path: pb, lines, filters: Vec::new()}
+        File{path: pb, records, filters: Vec::new()}
     }
 
     fn lines_from_file(filename: impl AsRef<Path>) -> Vec<String> {

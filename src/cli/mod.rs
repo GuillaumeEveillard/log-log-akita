@@ -6,6 +6,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use engine::Engine;
 use tui::{Terminal, backend::Backend};
 use tui::backend::CrosstermBackend;
 use tui::style::{Color, Modifier, Style};
@@ -14,11 +15,6 @@ use tui::widgets::{Block, Borders, Paragraph, Widget, Wrap};
 use tui::layout::{Alignment, Constraint, Direction, Layout};
 
 fn main() -> Result<(), io::Error> {
-    let mut app = TerminalApp::new()?;
-    app.run();
-    Ok(())
-
-    /*
     let arg_matches = clap::App::new("Log Log Akita")
         .arg(clap::Arg::new("include")
             .about("include pattern")
@@ -60,25 +56,27 @@ fn main() -> Result<(), io::Error> {
     println!("{:?}", filters);
 
     let engine = engine::Engine::new(files, filters);
-
-    engine.all_lines().iter().for_each(|l| println!("{}", l));
-   */
+   
+    let mut app = TerminalApp::new(engine)?;
+    app.run();
+    Ok(())
 
 }
 
 struct TerminalApp {
+    engine: Engine,
     terminal: Terminal<CrosstermBackend<Stdout>>,
     x: bool
 }
 
 impl TerminalApp {
-    fn new() -> Result<TerminalApp, io::Error> {
+    fn new(engine: Engine) -> Result<TerminalApp, io::Error> {
         enable_raw_mode()?;
         let mut stdout = io::stdout();
         execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
         let backend = CrosstermBackend::new(stdout);
         let terminal = Terminal::new(backend)?;
-        Ok(TerminalApp{terminal,x: false})
+        Ok(TerminalApp{engine, terminal, x: false})
     }
 
     fn run(&mut self) -> Result<(), io::Error> {
@@ -98,14 +96,20 @@ impl TerminalApp {
                     )
                     .split(f.size());
     
-                let txt = if self.x { "faux "} else {"vrai"};
+
+                let text: Vec<Spans> = self.engine.all_lines().iter()
+                .take(10)
+                .map(|l| Spans::from(vec![Span::raw(l.clone())]))
+                .collect();
+
+             /*    let txt = if self.x { "faux "} else {"vrai"};
                 let text = vec![
                     Spans::from(vec![
                         Span::raw(txt),
                         Span::styled("line",Style::default().add_modifier(Modifier::ITALIC)),
                         Span::raw("."),
                     ]),
-                    Spans::from(Span::styled("Second line", Style::default().fg(Color::Red))),];
+                    Spans::from(Span::styled("Second line", Style::default().fg(Color::Red))),];*/
                 let para = Paragraph::new(text)
                     .block(Block::default().title("Paragraph").borders(Borders::ALL))
                     .style(Style::default().fg(Color::White).bg(Color::Black))
