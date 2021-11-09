@@ -96,7 +96,6 @@ impl TerminalApp {
                         ].as_ref()
                     )
                     .split(f.size());
-    
 
                 let text: Vec<Spans> = self.engine.lines(self.first_line, 100).iter()
               //  .take(10)
@@ -118,10 +117,9 @@ impl TerminalApp {
                     .wrap(Wrap { trim: true });
                 f.render_widget(data_para, chunks[0]);
     
-                let block = Block::default()
-                    .title("Info")
-                    .borders(Borders::ALL);
-                f.render_widget(block, chunks[1]);
+                let last_line = &self.first_line + chunks[0].height as usize;
+                let info_para  = TerminalApp::build_info_paragraph(self.first_line, last_line, &self.engine);
+                f.render_widget(info_para, chunks[1]);
             
             })?;
     
@@ -143,6 +141,19 @@ impl TerminalApp {
             }
         }
         Ok(())
+    }
+
+    fn build_info_paragraph(first_line: usize, last_line: usize, engine: &Engine) -> Paragraph<'static> {
+        let line_info = format!("Displaying from {} to {} (total {})", first_line, last_line, engine.number_of_lines());
+        let spans: Vec<Spans> = vec![
+            Spans::from(vec![Span::raw(line_info)])
+        ];
+
+        Paragraph::new(spans)
+            .block(Block::default().title("Info").borders(Borders::ALL))
+            .style(Style::default().fg(Color::White).bg(Color::Black))
+            .alignment(Alignment::Left)
+            .wrap(Wrap { trim: true })
     }
 }
 

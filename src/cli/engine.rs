@@ -54,6 +54,13 @@ impl Engine {
         };
     }
 
+    pub fn number_of_lines(&self) -> usize {
+        match &self.lines {
+            Some(ll) => return ll.len(),
+            None => return 0,
+        };
+    }
+
     fn keep(&self, line: &str) -> bool {
         self.filters.iter().all(|f| f.keep(line))
     }
