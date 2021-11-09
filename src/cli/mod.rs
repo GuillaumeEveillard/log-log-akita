@@ -67,7 +67,7 @@ fn main() -> Result<(), io::Error> {
 struct TerminalApp {
     engine: Engine,
     terminal: Terminal<CrosstermBackend<Stdout>>,
-    x: bool
+    first_line: usize
 }
 
 impl TerminalApp {
@@ -77,7 +77,7 @@ impl TerminalApp {
         execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
         let backend = CrosstermBackend::new(stdout);
         let terminal = Terminal::new(backend)?;
-        Ok(TerminalApp{engine, terminal, x: false})
+        Ok(TerminalApp{engine, terminal, first_line: 0})
     }
 
     fn run(&mut self) -> Result<(), io::Error> {
@@ -98,7 +98,7 @@ impl TerminalApp {
                     .split(f.size());
     
 
-                let text: Vec<Spans> = self.engine.lines(0, 100).iter()
+                let text: Vec<Spans> = self.engine.lines(self.first_line, 100).iter()
               //  .take(10)
                 .map(|l| Spans::from(vec![Span::raw(l.clone())]))
                 .collect();
@@ -111,15 +111,15 @@ impl TerminalApp {
                         Span::raw("."),
                     ]),
                     Spans::from(Span::styled("Second line", Style::default().fg(Color::Red))),];*/
-                let para = Paragraph::new(text)
-                    .block(Block::default().title("Paragraph").borders(Borders::ALL))
+                let data_para = Paragraph::new(text)
+                    .block(Block::default().title("Data").borders(Borders::ALL))
                     .style(Style::default().fg(Color::White).bg(Color::Black))
-                    .alignment(Alignment::Center)
+                    .alignment(Alignment::Left)
                     .wrap(Wrap { trim: true });
-                f.render_widget(para, chunks[0]);
+                f.render_widget(data_para, chunks[0]);
     
                 let block = Block::default()
-                    .title("Block")
+                    .title("Info")
                     .borders(Borders::ALL);
                 f.render_widget(block, chunks[1]);
             
@@ -127,8 +127,13 @@ impl TerminalApp {
     
             if let Event::Key(key) = event::read()? {
                 match key.code {
-                    KeyCode::Char('e') => {
-                        self.x = true;
+                    KeyCode::Down => {
+                        self.first_line += 1;
+                    }
+                    KeyCode::Up => {
+                        if self.first_line > 0 {
+                            self.first_line -= 1;
+                        }
                     }
                     KeyCode::Char('q') => {
                         return Ok(());
