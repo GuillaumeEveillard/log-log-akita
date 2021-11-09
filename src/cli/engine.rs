@@ -1,3 +1,5 @@
+use std::cmp::max;
+use std::cmp::min;
 use std::path::PathBuf;
 use std::path::Path;
 use std::slice::Iter;
@@ -9,16 +11,17 @@ use chrono::DateTime;
 
 pub struct Engine {
     files: Vec<File>,
-    filters: Vec<Box<dyn Filter>>
+    filters: Vec<Box<dyn Filter>>,
+    lines: Option<Vec<String>>,
 }
 
 impl Engine {
     pub fn new<P: AsRef<Path>>(files: Vec<P>, filters: Vec<Box<dyn Filter>>) -> Engine {
         let ff = files.into_iter().map(|f| File::new(f)).collect();
-        Engine{files: ff, filters: filters}
+        Engine{files: ff, filters: filters, lines: None}
     }
 
-    pub fn all_lines(&self) -> Vec<String> {
+    pub fn compute(&mut self) {
         let mut lines = Vec::new();
 
         for file in &self.files {
@@ -28,10 +31,27 @@ impl Engine {
                         .filter(|l| self.keep(l)).cloned());
             }
         }
+        self.lines = Some(lines);
+    }
 
-//        self.files.iter()
-  //          .for_each(|f| lines.extend(f.records.iter().filter(|l| self.keep(l)).cloned()));
-        lines
+    pub fn all_lines(&self) -> &[String] {
+        match &self.lines {
+            Some(ll) => return &ll,
+            None => return &[] as &[String],
+        };
+    }
+
+    pub fn lines(&self, start: usize, length: usize) -> &[String] {
+        match &self.lines {
+            Some(ll) => {
+                if start >= ll.len() {
+                    return &[] as &[String];
+                }
+                let end = min(start+length, ll.len());
+                return &ll[start..end];
+            },
+            None => return &[] as &[String],
+        };
     }
 
     fn keep(&self, line: &str) -> bool {

@@ -55,7 +55,8 @@ fn main() -> Result<(), io::Error> {
 
     println!("{:?}", filters);
 
-    let engine = engine::Engine::new(files, filters);
+    let mut engine = engine::Engine::new(files, filters);
+    engine.compute();
    
     let mut app = TerminalApp::new(engine)?;
     app.run();
@@ -97,8 +98,8 @@ impl TerminalApp {
                     .split(f.size());
     
 
-                let text: Vec<Spans> = self.engine.all_lines().iter()
-                .take(10)
+                let text: Vec<Spans> = self.engine.lines(0, 100).iter()
+              //  .take(10)
                 .map(|l| Spans::from(vec![Span::raw(l.clone())]))
                 .collect();
 

@@ -1,0 +1,4 @@
+1996-12-19T16:39:57-08:00 INFO Starting server 1
+1996-12-19T16:39:59-08:00 INFO Server 1 ready
+1996-12-19T16:42:03-08:00 WARN Oops something is wrong on server 1
+1996-12-19T17:00:01-08:00 INFO Shutting down server 1
