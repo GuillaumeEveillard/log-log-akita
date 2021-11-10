@@ -1,0 +1,6 @@
+1996-12-19T16:39:58-08:00 INFO Starting server 3
+1996-12-19T16:40:01-08:00 EROR Paf le server
+This is the stack trace
+log4.j blabla
+hibernate blabla
+1996-12-19T16:40:20-08:00 INFO Restarting server 3

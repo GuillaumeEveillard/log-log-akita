@@ -3,8 +3,10 @@ use std::cmp::min;
 use std::path::PathBuf;
 use std::path::Path;
 use std::slice::Iter;
+use chrono::FixedOffset;
 use chrono::NaiveDateTime;
 use chrono::Utc;
+use chrono::TimeZone;
 use smallvec::SmallVec;
 use smallvec::smallvec;
 use chrono::DateTime;
@@ -24,13 +26,15 @@ impl Engine {
     pub fn compute(&mut self) {
         let mut lines = Vec::new();
 
-        for file in &self.files {
-            for rec in &file.records {
-                lines.extend(
-                    rec.line_iterator()
-                        .filter(|l| self.keep(l)).cloned());
-            }
+        let mut all_records : Vec<&Record> = self.files.iter().flat_map(|f| &f.records).collect();
+        all_records.sort_by_key(|r| r.timestamp);
+
+        for rec in all_records {
+            lines.extend(
+                rec.line_iterator()
+                    .filter(|l| self.keep(l)).cloned());
         }
+        
         self.lines = Some(lines);
     }
 
@@ -86,11 +90,42 @@ impl Record {
 impl File {
     fn new<P: AsRef<Path>>(path: P) -> File {
         let lines = File::lines_from_file(&path);
-        let records = lines.into_iter()
-        .map(|l| Record {
-            timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(61, 0), Utc),
-            lines: smallvec![l]})
-        .collect();
+
+        let mut records: Vec<Record> = Vec::new();
+        let mut last_record : Option<Record> = None;
+        for line in lines {
+            let timestamp = if line.len() >= 25 {
+                match DateTime::<FixedOffset>::parse_from_rfc3339(&line[0..25]) {
+                    Ok(t) => Some(t),
+                    Err(e) => None,
+                }
+            } else {
+                None
+            };
+
+            match timestamp {
+                Some(t) => {
+                    if last_record.is_some() {
+                        records.push(last_record.take().unwrap());
+                    }
+                    last_record = Some(Record {timestamp: t.with_timezone(&Utc), lines: smallvec![line]});
+                },
+                None => {
+                    match &mut last_record {
+                        Some(lr) => {
+                            lr.lines.push(line);
+                        },
+                        None => {
+                            records.push(Record{timestamp: Utc.timestamp(0, 0), lines: smallvec! [line]});
+                        }
+                    }
+                },
+            }
+        }
+
+        if last_record.is_some() {
+            records.push(last_record.take().unwrap());
+        }
 
         let p = path.as_ref();
         let mut pb = PathBuf::new();

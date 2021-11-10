@@ -117,7 +117,7 @@ impl TerminalApp {
                     .wrap(Wrap { trim: true });
                 f.render_widget(data_para, chunks[0]);
     
-                let last_line = &self.first_line + chunks[0].height as usize;
+                let last_line = &self.first_line + chunks[0].height as usize - 2; //threre are 2 horizontal lines which should be ignored
                 let info_para  = TerminalApp::build_info_paragraph(self.first_line, last_line, &self.engine);
                 f.render_widget(info_para, chunks[1]);
             
